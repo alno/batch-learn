@@ -9,3 +9,7 @@ Algorithms included:
 ## Installation
 
 ## Usage
+
+First, you need to convert to batch-learn format:
+
+    batch-learn convert -f ffm -b 24  ffm_dataset.txt -O bl_dataset

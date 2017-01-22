@@ -1,4 +1,5 @@
 #include "command.hpp"
+#include "convert-command.hpp"
 
 #include <unordered_map>
 #include <iostream>
@@ -51,6 +52,7 @@ int main(int ac, char* av[]) {
 
     // Prepare commands
     commands.insert(make_pair("help", new help_command()));
+    commands.insert(make_pair("convert", new convert_command()));
 
     // Check if command specified
     if (ac <= 1) {
