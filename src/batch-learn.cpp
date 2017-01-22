@@ -1,6 +1,7 @@
 #include "command.hpp"
 #include "convert-command.hpp"
 #include "ffm-command.hpp"
+#include "nn-command.hpp"
 
 #include <unordered_map>
 #include <iostream>
@@ -55,6 +56,7 @@ int main(int ac, char* av[]) {
     commands.insert(make_pair("help", new help_command()));
     commands.insert(make_pair("convert", new convert_command()));
     commands.insert(make_pair("ffm", new ffm_command()));
+    commands.insert(make_pair("nn", new nn_command()));
 
     // Check if command specified
     if (ac <= 1) {
