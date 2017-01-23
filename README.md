@@ -6,7 +6,20 @@ Algorithms included:
 * FFM
 * NN / MLP
 
+It's extracted from the [code](https://github.com/alno/kaggle-outbrain-click-prediction) written during [Outbrain Click Prediction](https://www.kaggle.com/c/outbrain-click-prediction/) competition on Kaggle and now is undergoing some rewrite and refactoring.
+
 ## Installation
+
+Batch-learn uses [CMake](https://cmake.org/) as a build tool and depends on following libraries:
+* boost-program-options
+* boost-iostreams
+
+To compile code you need to install boost libraries and then call:
+
+    mkdir build
+    cd build
+    cmake ..
+    make
 
 ## Usage
 
