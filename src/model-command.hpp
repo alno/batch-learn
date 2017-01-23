@@ -25,5 +25,5 @@ public:
     }
 
     virtual int run();
-    virtual std::unique_ptr<model> create_model(batch_learn::file_index & index) = 0;
+    virtual std::unique_ptr<model> create_model(uint32_t n_fields, uint32_t n_indices, uint32_t n_index_bits) = 0;
 };

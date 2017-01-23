@@ -21,7 +21,7 @@ public:
     virtual std::string name() { return "ffm"; }
     virtual std::string description() { return "train and apply ffm model"; }
 
-    virtual std::unique_ptr<model> create_model(batch_learn::file_index & index) {
-        return std::unique_ptr<model>(new ffm_model(index.n_fields, index.n_indices, index.n_index_bits, n_dim, seed, eta, lambda));
+    virtual std::unique_ptr<model> create_model(uint32_t n_fields, uint32_t n_indices, uint32_t n_index_bits) {
+        return std::unique_ptr<model>(new ffm_model(n_fields, n_indices, n_index_bits, n_dim, seed, eta, lambda));
     }
 };

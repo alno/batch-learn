@@ -257,7 +257,7 @@ int model_command::run() {
 
     auto ds_train = batch_learn_dataset(train_file_name);
 
-    auto model = create_model(ds_train.index);
+    auto model = create_model(ds_train.index.n_fields, ds_train.index.n_indices, ds_train.index.n_index_bits);
 
     if (val_file_name.empty()) { // No validation set given, just train
         for (uint epoch = 0; epoch < n_epochs; ++ epoch) {
@@ -268,6 +268,9 @@ int model_command::run() {
     } else { // Train with validation each epoch
         auto ds_val = batch_learn_dataset(val_file_name);
 
+        if (ds_val.index.n_index_bits != ds_train.index.n_index_bits)
+            throw std::runtime_error("Mismatching index bits in train and val");
+
         for (uint epoch = 0; epoch < n_epochs; ++ epoch) {
             cout << "Epoch " << epoch << "..." << endl;
 
@@ -276,12 +279,16 @@ int model_command::run() {
         }
     }
 
+    // Predict on test if given
     if (!test_file_name.empty() && !pred_file_name.empty()) {
         auto ds_test = batch_learn_dataset(test_file_name);
+
+        if (ds_test.index.n_index_bits != ds_train.index.n_index_bits)
+            throw std::runtime_error("Mismatching index bits in train and test");
 
         ofstream out(pred_file_name);
         predict_on_dataset(*model, ds_test, out);
     }
 
-    return 1;
+    return 0;
 }
