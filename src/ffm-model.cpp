@@ -86,12 +86,20 @@ float ffm_model::predict(const batch_learn::feature * start, const batch_learn::
         uint field_a = fa->index >> n_index_bits;
         float value_a = fa->value;
 
+        // Check index/field bounds
+        if (index_a >= n_indices || field_a >= n_fields)
+            continue;
+
         linear_total += value_a * lin_weights[index_a*2] / linear_norm;
 
         for (const batch_learn::feature * fb = start; fb != fa; ++ fb, ++ i) {
             uint index_b = fb->index &  index_mask;
             uint field_b = fb->index >> n_index_bits;
             float value_b = fb->value;
+
+            // Check index/field bounds
+            if (index_b >= n_indices || field_b >= n_fields)
+                continue;
 
             if (test_mask_bit(dropout_mask, i) == 0)
                 continue;
@@ -127,6 +135,10 @@ void ffm_model::update(const batch_learn::feature * start, const batch_learn::fe
         uint field_a = fa->index >> n_index_bits;
         float value_a = fa->value;
 
+        // Check index/field bounds
+        if (index_a >= n_indices || field_a >= n_fields)
+            continue;
+
         float g = lambda * lin_weights[index_a*2] + kappa * value_a / linear_norm;
         float wg = lin_weights[index_a*2 + 1] + g*g;
 
@@ -137,6 +149,10 @@ void ffm_model::update(const batch_learn::feature * start, const batch_learn::fe
             uint index_b = fb->index &  index_mask;
             uint field_b = fb->index >> n_index_bits;
             float value_b = fb->value;
+
+            // Check index/field bounds
+            if (index_b >= n_indices || field_b >= n_fields)
+                continue;
 
             if (test_mask_bit(dropout_mask, i) == 0)
                 continue;

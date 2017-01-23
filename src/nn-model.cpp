@@ -174,6 +174,10 @@ float nn_model::predict(const batch_learn::feature * start, const batch_learn::f
         uint index = fa->index & index_mask;
         float value = fa->value;
 
+        // Check index bounds
+        if (index >= n_indices)
+            continue;
+
         float * wl = lin_w + index * l0_output_size;
 
         __m256 ymm_val = _mm256_set1_ps(value / linear_norm);
@@ -263,6 +267,10 @@ void nn_model::update(const batch_learn::feature * start, const batch_learn::fea
     for (const batch_learn::feature * fa = start; fa != end; ++ fa) {
         uint index = fa->index & index_mask;
         float value = fa->value;
+
+        // Check index bounds
+        if (index >= n_indices)
+            continue;
 
         float * wl = lin_w + index * l0_output_size;
         float * wgl = lin_wg + index * l0_output_size;
