@@ -1,7 +1,7 @@
 #pragma once
 
 #include "command.hpp"
-#include "model.hpp"
+#include "../models/model.hpp"
 
 
 class model_command : public command {

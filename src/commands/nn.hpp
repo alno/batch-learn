@@ -1,7 +1,7 @@
 #pragma once
 
-#include "model-command.hpp"
-#include "nn-model.hpp"
+#include "model.hpp"
+#include "../models/nn.hpp"
 
 
 class nn_command : public model_command {

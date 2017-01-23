@@ -1,7 +1,6 @@
-#include "command.hpp"
-#include "convert-command.hpp"
-#include "ffm-command.hpp"
-#include "nn-command.hpp"
+#include "commands/convert.hpp"
+#include "commands/ffm.hpp"
+#include "commands/nn.hpp"
 
 #include <unordered_map>
 #include <iostream>

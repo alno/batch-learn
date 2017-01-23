@@ -1,4 +1,4 @@
-#include "convert-command.hpp"
+#include "convert.hpp"
 
 #include <batch_learn.hpp>
 

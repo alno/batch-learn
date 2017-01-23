@@ -1,5 +1,6 @@
-#include "ffm-model.hpp"
-#include "model-helpers.hpp"
+#include "ffm.hpp"
+
+#include "../util/model.hpp"
 
 #include <iostream>
 #include <iomanip>

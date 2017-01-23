@@ -1,7 +1,7 @@
-#include "nn-model.hpp"
+#include "nn.hpp"
 
-#include "model-helpers.hpp"
-#include "nn-helpers.hpp"
+#include "../util/model.hpp"
+#include "../util/nn.hpp"
 
 #include <iostream>
 #include <iomanip>

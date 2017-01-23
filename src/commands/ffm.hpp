@@ -1,7 +1,7 @@
 #pragma once
 
-#include "model-command.hpp"
-#include "ffm-model.hpp"
+#include "model.hpp"
+#include "../models/ffm.hpp"
 
 
 class ffm_command : public model_command {
