@@ -34,3 +34,11 @@ To train ffm model and make predictions on test dataset:
 You also may specify validation dataset:
 
     batch-learn ffm --train tr1 --test te1 --val va1 --pred pred.txt
+
+To get list of available commands just run:
+
+    batch-learn help
+
+To get help about some specific command:
+
+    batch-learn help ffm
