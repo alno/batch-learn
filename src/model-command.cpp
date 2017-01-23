@@ -95,7 +95,7 @@ float compute_norm(batch_learn::feature * fa, batch_learn::feature * fb) {
 }
 
 
-double train_on_dataset(model * m, const batch_learn_dataset & dataset, uint dropout_prob_log) {
+double train_on_dataset(model & m, const batch_learn_dataset & dataset, uint dropout_prob_log) {
     float dropout_mult = (1 << dropout_prob_log) / ((1 << dropout_prob_log) - 1.0f);
 
     time_t start_time = time(nullptr);
@@ -133,16 +133,16 @@ double train_on_dataset(model * m, const batch_learn_dataset & dataset, uint dro
                 auto start_offset = dataset.index.offsets[ei] - batch_start_offset;
                 auto end_offset = dataset.index.offsets[ei+1] - batch_start_offset;
 
-                auto dropout_mask_size = m->get_dropout_mask_size(batch_features_data + start_offset, batch_features_data + end_offset);
+                auto dropout_mask_size = m.get_dropout_mask_size(batch_features_data + start_offset, batch_features_data + end_offset);
 
                 fill_mask_rand(dropout_mask, (dropout_mask_size + 63) / 64, dropout_prob_log);
 
                 float norm = compute_norm(batch_features_data + start_offset, batch_features_data + end_offset);
 
-                float t = m->predict(batch_features_data + start_offset, batch_features_data + end_offset, norm, dropout_mask, dropout_mult);
+                float t = m.predict(batch_features_data + start_offset, batch_features_data + end_offset, norm, dropout_mask, dropout_mult);
                 float expnyt = exp(-y*t);
 
-                m->update(batch_features_data + start_offset, batch_features_data + end_offset, norm, -y * expnyt / (1+expnyt), dropout_mask, dropout_mult);
+                m.update(batch_features_data + start_offset, batch_features_data + end_offset, norm, -y * expnyt / (1+expnyt), dropout_mask, dropout_mult);
 
                 loss += log(1+exp(-y*t));
             }
@@ -157,7 +157,7 @@ double train_on_dataset(model * m, const batch_learn_dataset & dataset, uint dro
 }
 
 
-double evaluate_on_dataset(const std::vector<std::unique_ptr<model>> & models, const batch_learn_dataset & dataset) {
+double evaluate_on_dataset(model & m, const batch_learn_dataset & dataset) {
     time_t start_time = time(nullptr);
 
     std::cout << "  Evaluating... ";
@@ -192,17 +192,10 @@ double evaluate_on_dataset(const std::vector<std::unique_ptr<model>> & models, c
             auto end_offset = dataset.index.offsets[ei+1] - batch_start_offset;
 
             float norm = compute_norm(batch_features_data + start_offset, batch_features_data + end_offset);
+            float t = m.predict(batch_features_data + start_offset, batch_features_data + end_offset, norm, dropout_mask, 1);
 
-            float ts = 0.0;
-            uint tc = 0;
-
-            for (uint mi = 0; mi < models.size(); ++ mi) {
-                ts += models[mi]->predict(batch_features_data + start_offset, batch_features_data + end_offset, norm, dropout_mask, 1);
-                tc ++;
-            }
-
-            loss += log(1+exp(-y*ts/tc));
-            predictions[ei] = 1 / (1+exp(-ts/tc));
+            loss += log(1+exp(-y*t));
+            predictions[ei] = 1 / (1+exp(-t));
         }
 
         cnt += batch_end_index - batch_start_index;
@@ -213,7 +206,7 @@ double evaluate_on_dataset(const std::vector<std::unique_ptr<model>> & models, c
     return loss;
 }
 
-void predict_on_dataset(const std::vector<std::unique_ptr<model>> & models, const batch_learn_dataset & dataset, std::ostream & out) {
+void predict_on_dataset(model & m, const batch_learn_dataset & dataset, std::ostream & out) {
     time_t start_time = time(nullptr);
 
     std::cout << "  Predicting... ";
@@ -242,16 +235,9 @@ void predict_on_dataset(const std::vector<std::unique_ptr<model>> & models, cons
             auto end_offset = dataset.index.offsets[ei+1] - batch_start_offset;
 
             float norm = compute_norm(batch_features_data + start_offset, batch_features_data + end_offset);
+            float t = m.predict(batch_features_data + start_offset, batch_features_data + end_offset, norm, dropout_mask, 1);
 
-            float ts = 0.0;
-            uint tc = 0;
-
-            for (uint mi = 0; mi < models.size(); ++ mi) {
-                ts += models[mi]->predict(batch_features_data + start_offset, batch_features_data + end_offset, norm, dropout_mask, 1);
-                tc ++;
-            }
-
-            out << 1/(1+exp(-ts/tc)) << std::endl;
+            out << 1/(1+exp(-t)) << std::endl;
         }
 
         cnt += batch_end_index - batch_start_index;
@@ -271,14 +257,13 @@ int model_command::run() {
 
     auto ds_train = batch_learn_dataset(train_file_name);
 
-    vector<unique_ptr<model>> models;
-    models.push_back(create_model(ds_train.index));
+    auto model = create_model(ds_train.index);
 
     if (val_file_name.empty()) { // No validation set given, just train
         for (uint epoch = 0; epoch < n_epochs; ++ epoch) {
             cout << "Epoch " << epoch << "..." << endl;
 
-            train_on_dataset(models[0].get(), ds_train, dropout_prob_log);
+            train_on_dataset(*model, ds_train, dropout_prob_log);
         }
     } else { // Train with validation each epoch
         auto ds_val = batch_learn_dataset(val_file_name);
@@ -286,8 +271,8 @@ int model_command::run() {
         for (uint epoch = 0; epoch < n_epochs; ++ epoch) {
             cout << "Epoch " << epoch << "..." << endl;
 
-            train_on_dataset(models[0].get(), ds_train, dropout_prob_log);
-            evaluate_on_dataset(models, ds_val);
+            train_on_dataset(*model, ds_train, dropout_prob_log);
+            evaluate_on_dataset(*model, ds_val);
         }
     }
 
@@ -295,7 +280,7 @@ int model_command::run() {
         auto ds_test = batch_learn_dataset(test_file_name);
 
         ofstream out(pred_file_name);
-        predict_on_dataset(models, ds_test, out);
+        predict_on_dataset(*model, ds_test, out);
     }
 
     return 1;
