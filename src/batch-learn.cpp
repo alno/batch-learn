@@ -52,10 +52,10 @@ int main(int ac, char* av[]) {
     using namespace std;
 
     // Prepare commands
-    commands.insert(make_pair("help", new help_command()));
-    commands.insert(make_pair("convert", new convert_command()));
-    commands.insert(make_pair("ffm", new ffm_command()));
-    commands.insert(make_pair("nn", new nn_command()));
+    commands.insert(make_pair("help", unique_ptr<command>(new help_command())));
+    commands.insert(make_pair("convert", unique_ptr<command>(new convert_command())));
+    commands.insert(make_pair("ffm", unique_ptr<command>(new ffm_command())));
+    commands.insert(make_pair("nn", unique_ptr<command>(new nn_command())));
 
     // Check if command specified
     if (ac <= 1) {
