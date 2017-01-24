@@ -53,11 +53,27 @@ ffm_model::ffm_model(uint32_t n_fields, uint32_t n_indices, uint32_t n_index_bit
     bias_w = 0;
     bias_wg = 1;
 
-    ffm_weights = malloc_aligned<float>(n_indices * n_fields * n_dim_aligned * 2);
-    lin_weights = malloc_aligned<float>(n_indices * 2);
+    try {
+        uint64_t total_weights = size_t(n_indices) * n_fields * n_dim_aligned * 2 + n_indices * 2;
 
-    init_ffm_weights(ffm_weights, n_indices * n_fields, n_dim, n_dim_aligned, std::uniform_real_distribution<float>(0.0, 1.0/sqrt(n_dim)), rnd);
+        std::cout << "Allocating " << (total_weights * sizeof(float) / 1024 / 1024) << " MB memory for model weights... ";
+        std::cout.flush();
+
+        ffm_weights = malloc_aligned<float>(uint64_t(n_indices) * n_fields * n_dim_aligned * 2);
+        lin_weights = malloc_aligned<float>(n_indices * 2);
+
+        std::cout << "done." << std::endl;
+    } catch (std::bad_alloc & e) {
+        throw std::runtime_error("Can't allocate weights memory");
+    }
+
+    std::cout << "Initializing weights... ";
+    std::cout.flush();
+
+    init_ffm_weights(ffm_weights, size_t(n_indices) * n_fields, n_dim, n_dim_aligned, std::uniform_real_distribution<float>(0.0, 1.0/sqrt(n_dim)), rnd);
     init_lin_weights(lin_weights, n_indices);
+
+    std::cout << "done." << std::endl;
 }
 
 ffm_model::~ffm_model() {
