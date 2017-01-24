@@ -6,6 +6,13 @@
 
 constexpr uint max_line_size = 100000;
 
+inline uint32_t h(uint32_t x) {
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = ((x >> 16) ^ x) * 0x45d9f3b;
+    x = (x >> 16) ^ x;
+    return x;
+}
+
 int convert_command::run() {
     if (input_format_name == std::string("ffm")) {
         convert_from_ffm();
@@ -56,6 +63,9 @@ void convert_command::convert_from_ffm() {
             uint field = atoi(field_char);
             uint index = atoi(index_char);
             float value = atof(value_char);
+
+            if (rehash_indexes > 0)
+                index = h(index) % rehash_indexes;
 
             if (field >= output_index.n_fields)
                 output_index.n_fields = field + 1;
