@@ -24,8 +24,6 @@ public:
     nn_model(uint32_t n_indices, uint32_t n_index_bits, int seed, float eta, float lambda);
     virtual ~nn_model();
 
-    virtual float predict(const batch_learn::feature * start, const batch_learn::feature * end, float norm, uint64_t * dropout_mask, float dropout_mult);
-    virtual void update(const batch_learn::feature * start, const batch_learn::feature * end, float norm, float kappa, uint64_t * dropout_mask, float dropout_mult);
-
-    virtual uint get_dropout_mask_size(const batch_learn::feature * start, const batch_learn::feature * end);
+    virtual float predict(const batch_learn::feature * start, const batch_learn::feature * end, float norm, bool train);
+    virtual void update(const batch_learn::feature * start, const batch_learn::feature * end, float norm, float kappa);
 };

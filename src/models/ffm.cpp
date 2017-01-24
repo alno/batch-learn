@@ -7,6 +7,34 @@
 #include <fstream>
 #include <algorithm>
 
+#include <cstring>
+
+
+class state {
+public:
+    std::vector<uint64_t> dropout_mask;
+    float dropout_mult;
+public:
+    void init_train_dropout_mask(int len) {
+        dropout_mult = 2.0;
+        dropout_mask.resize((len + 63) / 64);
+
+        for (uint64_t * p = dropout_mask.data(); p != dropout_mask.data() + dropout_mask.size(); ++ p)
+            if (_rdrand64_step((unsigned long long *)p) != 1)
+                throw std::runtime_error("Error generating random number!");
+
+    }
+
+    void init_test_dropout_mask(int len) {
+        dropout_mult = 1.0;
+        dropout_mask.resize((len + 63) / 64);
+
+        memset(dropout_mask.data(), 0xFF, dropout_mask.size() * sizeof(uint64_t));
+    }
+};
+
+static thread_local state local_state;
+
 
 template <typename D>
 static void init_ffm_weights(float * weights, uint64_t n, uint32_t n_dim, uint32_t n_dim_aligned, D gen, std::default_random_engine & rnd) {
@@ -33,6 +61,7 @@ static void init_lin_weights(float * weights, uint64_t n) {
         *w++ = 1;
     }
 }
+
 
 ffm_model::ffm_model(uint32_t n_fields, uint32_t n_indices, uint32_t n_index_bits, uint32_t n_dim, int seed, float eta, float lambda) {
     this->n_fields = n_fields;
@@ -76,21 +105,26 @@ ffm_model::ffm_model(uint32_t n_fields, uint32_t n_indices, uint32_t n_index_bit
     std::cout << "done." << std::endl;
 }
 
+
 ffm_model::~ffm_model() {
     free(ffm_weights);
     free(lin_weights);
 }
 
 
-uint ffm_model::get_dropout_mask_size(const batch_learn::feature * start, const batch_learn::feature * end) {
+float ffm_model::predict(const batch_learn::feature * start, const batch_learn::feature * end, float norm, bool train) {
     uint feature_count = end - start;
     uint interaction_count = feature_count * (feature_count + 1) / 2;
 
-    return interaction_count;
-}
+    if (train)
+        local_state.init_train_dropout_mask(interaction_count);
+    else
+        local_state.init_test_dropout_mask(interaction_count);
+
+    auto dropout_mask = local_state.dropout_mask.data();
+    float dropout_mult = local_state.dropout_mult;
 
 
-float ffm_model::predict(const batch_learn::feature * start, const batch_learn::feature * end, float norm, uint64_t * dropout_mask, float dropout_mult) {
     float linear_total = bias_w;
     float linear_norm = end - start;
 
@@ -139,7 +173,10 @@ float ffm_model::predict(const batch_learn::feature * start, const batch_learn::
 }
 
 
-void ffm_model::update(const batch_learn::feature * start, const batch_learn::feature * end, float norm, float kappa, uint64_t * dropout_mask, float dropout_mult) {
+void ffm_model::update(const batch_learn::feature * start, const batch_learn::feature * end, float norm, float kappa) {
+    auto dropout_mask = local_state.dropout_mask.data();
+    float dropout_mult = local_state.dropout_mult;
+
     float linear_norm = end - start;
 
     __m256 xmm_eta = _mm256_set1_ps(eta);

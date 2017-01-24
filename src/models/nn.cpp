@@ -115,12 +115,7 @@ nn_model::~nn_model() {
 }
 
 
-uint nn_model::get_dropout_mask_size(const batch_learn::feature * start, const batch_learn::feature * end) {
-    return 0;
-}
-
-
-float nn_model::predict(const batch_learn::feature * start, const batch_learn::feature * end, float norm, uint64_t * _dropout_mask, float dropout_mult) {
+float nn_model::predict(const batch_learn::feature * start, const batch_learn::feature * end, float norm, bool train) {
     float linear_norm = end - start;
     state_buffer & buf = local_state_buffer;
 
@@ -137,7 +132,7 @@ float nn_model::predict(const batch_learn::feature * start, const batch_learn::f
 
     std::uniform_real_distribution<float> dropout_distr(0, 1);
 
-    if (dropout_mult > 1) { // Apply dropout only in train
+    if (train) { // Apply dropout only in train
         float l0_dropout_prob = 0;//0.02;
         float l1_dropout_prob = 0;//0.02;
         float l2_dropout_prob = 0;//0.02;
@@ -207,7 +202,7 @@ float nn_model::predict(const batch_learn::feature * start, const batch_learn::f
 }
 
 
-void nn_model::update(const batch_learn::feature * start, const batch_learn::feature * end, float norm, float kappa, uint64_t * _dropout_mask, float _dropout_mult) {
+void nn_model::update(const batch_learn::feature * start, const batch_learn::feature * end, float norm, float kappa) {
     float linear_norm = end - start;
     state_buffer & buf = local_state_buffer;
 
