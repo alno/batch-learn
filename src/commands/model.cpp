@@ -1,5 +1,7 @@
 #include "model.hpp"
 
+#include "../util/dataset.hpp"
+
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -19,42 +21,7 @@ const uint32_t mini_batch_size = 24;
 const uint32_t dropout_mask_max_size = 4000; // in 64-bit words
 
 
-std::default_random_engine rnd(2017);
-
-
-template <typename T>
-T min(T a, T b) {
-    return a < b ? a : b;
-}
-
-
-class batch_learn_dataset {
-public:
-    batch_learn::file_index index;
-    std::string data_file_name;
-
-    batch_learn_dataset(const std::string & file_name) {
-        std::cout << "Loading " << file_name << ".index... ";
-        std::cout.flush();
-
-        index = batch_learn::read_index(file_name + ".index");
-        data_file_name = file_name + ".data";
-
-        std::cout << index.n_examples << " examples" << std::endl;
-    }
-
-    std::vector<std::pair<uint64_t, uint64_t>> generate_batches(bool shuffle) const {
-        std::vector<std::pair<uint64_t, uint64_t>> batches;
-
-        for (uint64_t batch_start = 0; batch_start < index.n_examples; batch_start += batch_size)
-            batches.push_back(std::make_pair(batch_start, min(batch_start + batch_size, index.n_examples)));
-
-        if (shuffle)
-            std::shuffle(batches.begin(), batches.end(), rnd);
-
-        return batches;
-    }
-};
+static std::default_random_engine rnd(2017);
 
 
 std::vector<std::pair<uint64_t, uint64_t>> generate_mini_batches(uint64_t begin, uint64_t end) {
@@ -103,7 +70,9 @@ double train_on_dataset(model & m, const batch_learn_dataset & dataset, uint dro
     std::cout << "  Training... ";
     std::cout.flush();
 
-    auto batches = dataset.generate_batches(true);
+    auto batches = dataset.generate_batches(batch_size);
+
+    std::shuffle(batches.begin(), batches.end(), rnd);
 
     double loss = 0.0;
     uint64_t cnt = 0;
@@ -163,7 +132,7 @@ double evaluate_on_dataset(model & m, const batch_learn_dataset & dataset) {
     std::cout << "  Evaluating... ";
     std::cout.flush();
 
-    auto batches = dataset.generate_batches(false);
+    auto batches = dataset.generate_batches(batch_size);
 
     uint64_t dropout_mask[dropout_mask_max_size];
     fill_mask_ones(dropout_mask, dropout_mask_max_size);
@@ -212,7 +181,7 @@ void predict_on_dataset(model & m, const batch_learn_dataset & dataset, std::ost
     std::cout << "  Predicting... ";
     std::cout.flush();
 
-    auto batches = dataset.generate_batches(false);
+    auto batches = dataset.generate_batches(batch_size);
 
     uint64_t dropout_mask[dropout_mask_max_size];
     fill_mask_ones(dropout_mask, dropout_mask_max_size);
