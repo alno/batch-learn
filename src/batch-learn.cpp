@@ -95,5 +95,10 @@ int main(int ac, char* av[]) {
     }
 
     // Run command
-    return cmd->run();
+    try {
+        return cmd->run();
+    } catch (std::exception & ex) {
+        cerr << endl << "Error: " << ex.what() << endl;
+        return -4;
+    }
 }
