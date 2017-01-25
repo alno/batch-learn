@@ -4,6 +4,8 @@
 
 #include <fstream>
 
+#include <boost/format.hpp>
+
 constexpr uint max_line_size = 100000;
 
 inline uint32_t h(uint32_t x) {
@@ -27,6 +29,7 @@ int convert_command::run() {
 void convert_command::convert_from_ffm() {
     using namespace std;
     using namespace batch_learn;
+    using boost::format;
 
     cout << "Converting " << input_file_name << " to " << output_file_name << " using " << index_bits << " index bits... ";
     cout.flush();
@@ -46,23 +49,47 @@ void convert_command::convert_from_ffm() {
     vector<feature> features;
     char line[max_line_size];
 
+    uint64_t i = 0;
     while (fgets(line, max_line_size, input_file) != nullptr) {
         features.clear();
+
+        ++ i;
 
         char *y_char = strtok(line, " \t");
         float y = (atoi(y_char) > 0) ? 1.0f : -1.0f;
 
         while (true) {
-            char *field_char = strtok(nullptr, ":");
-            char *index_char = strtok(nullptr, ":");
-            char *value_char = strtok(nullptr, " \t");
+            char * feature_char = strtok(nullptr, " \t");
 
-            if(field_char == nullptr || *field_char == '\n')
+            if (feature_char == nullptr || *feature_char == '\n')
                 break;
 
-            uint field = atoi(field_char);
-            uint index = atoi(index_char);
-            float value = atof(value_char);
+
+            char * index_delim = strpbrk(feature_char, ":");
+
+            if (index_delim == nullptr)
+                throw std::runtime_error(str(format("Invalid feature spec '%s' at line %d") % feature_char % i));
+
+            char * value_delim = strpbrk(index_delim + 1, ":");
+
+            if (value_delim == nullptr)
+                throw std::runtime_error(str(format("Invalid feature spec '%s' at line %d") % feature_char % i));
+
+            if (feature_char[0] == ':' || feature_char[0] == 0)
+                throw std::runtime_error(str(format("Empty field in '%s' at line %d") % feature_char % i));
+
+            if (index_delim[1] == ':' || index_delim[1] == 0)
+                throw std::runtime_error(str(format("Empty index in '%s' at line %d") % feature_char % i));
+
+            if (value_delim[1] == 0)
+                throw std::runtime_error(str(format("Empty value in '%s' at line %d") % feature_char % i));
+
+            index_delim[0] = 0;
+            value_delim[0] = 0;
+
+            uint field = atoi(feature_char);
+            uint index = atoi(index_delim + 1);
+            float value = atof(value_delim + 1);
 
             if (rehash_indexes > 0)
                 index = h(index) % rehash_indexes;
