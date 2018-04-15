@@ -194,4 +194,56 @@ public:
     }
 };
 
+
+class file_writer {
+private:
+    std::string filename;
+    uint32_t index_mask;
+    file_index index;
+    stream_data_writer data_writer;
+
+public:
+    file_writer(const std::string& _filename, uint32_t index_bits, uint32_t n_fields = 0, uint32_t n_indices = 0)
+        : filename(_filename)
+        , index_mask((1 << index_bits) - 1)
+        , data_writer(filename + ".data")
+    {
+        index.n_examples = 0;
+        index.n_fields = n_fields;
+        index.n_indices = n_indices;
+        index.n_index_bits = index_bits;
+        index.offsets.push_back(0);
+    }
+
+    void write_row(const std::vector<feature> & features, float y, uint64_t group) {
+        index.n_examples ++;
+        index.labels.push_back(y);
+        index.groups.push_back(group);
+        index.offsets.push_back(data_writer.write(features));
+    }
+
+    void write_row(size_t n_features, const int* fields, const int* indices, const float* values, float y, uint64_t group) {
+        std::vector<feature> features(n_features);
+        for (size_t i = 0; i < n_features; ++ i) {
+            uint32_t idx = indices[i] & index_mask;
+
+            features[i].index = (fields[i] << index.n_index_bits) | idx;
+            features[i].value = values[i];
+
+            if (uint32_t(fields[i]) >= index.n_fields)
+                index.n_fields = fields[i] + 1;
+
+            if (idx >= index.n_indices)
+                index.n_indices = idx + 1;
+        }
+
+        write_row(features, y, group);
+    }
+
+    void write_index() {
+        batch_learn::write_index(filename + ".index", index);
+    }
+};
+
+
 };
