@@ -63,13 +63,14 @@ static void init_lin_weights(float * weights, uint64_t n) {
 }
 
 
-ffm_model::ffm_model(uint32_t n_fields, uint32_t n_indices, uint32_t n_index_bits, uint32_t n_dim, int seed, float eta, float lambda) {
+ffm_model::ffm_model(uint32_t n_fields, uint32_t n_indices, uint32_t n_index_bits, uint32_t n_dim, int seed, float eta, float lambda, bool dropout) {
     this->n_fields = n_fields;
     this->n_indices = n_indices;
     this->n_index_bits = n_index_bits;
     this->n_dim = n_dim;
     this->eta = eta;
     this->lambda = lambda;
+    this->dropout = dropout;
 
     n_dim_aligned = ((n_dim - 1) / align_floats + 1) * align_floats;
 
@@ -117,7 +118,7 @@ float ffm_model::predict(const batch_learn::feature * start, const batch_learn::
     uint feature_count = end - start;
     uint interaction_count = feature_count * (feature_count + 1) / 2;
 
-    if (train)
+    if (train && dropout)
         local_state.init_train_dropout_mask(interaction_count);
     else
         local_state.init_test_dropout_mask(interaction_count);

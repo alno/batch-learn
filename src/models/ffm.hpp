@@ -16,8 +16,9 @@ class ffm_model : public model {
 
     float eta;
     float lambda;
+    bool dropout;
 public:
-    ffm_model(uint32_t n_fields, uint32_t n_indices, uint32_t n_index_bits, uint32_t n_dim, int seed, float eta, float lambda);
+    ffm_model(uint32_t n_fields, uint32_t n_indices, uint32_t n_index_bits, uint32_t n_dim, int seed, float eta, float lambda, bool dropout);
     virtual ~ffm_model();
 
     virtual float predict(const batch_learn::feature * start, const batch_learn::feature * end, float norm, bool train);
