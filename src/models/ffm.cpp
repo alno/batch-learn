@@ -85,6 +85,7 @@ ffm_model::ffm_model(uint32_t n_fields, uint32_t n_indices, uint32_t n_index_bit
     try {
         uint64_t total_weights = size_t(n_indices) * n_fields * n_dim_aligned * 2 + n_indices * 2;
 
+        std::cout << "Indices: " << n_indices << ", fields: " << n_fields << std::endl;
         std::cout << "Allocating " << (total_weights * sizeof(float) / 1024 / 1024) << " MB memory for model weights... ";
         std::cout.flush();
 
@@ -249,6 +250,6 @@ void ffm_model::update(const batch_learn::feature * start, const batch_learn::fe
     }
 
     // Update bias
-    bias_wg += kappa;
+    bias_wg += kappa*kappa;
     bias_w -= eta * kappa / sqrt(bias_wg);
 }
